@@ -1,0 +1,9 @@
+{
+  "name": "progress_tracking",
+  "cwd": "/root/code/progress_tracking",
+  "script": "server.py",
+  "out_file": "/root/code/progress_tracking/log/log.log",
+  "error_file": "/root/code/progress_tracking/log/error.log",
+  "autorestart": true,
+  "exec_mode": "fork"
+}
