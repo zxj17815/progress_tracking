@@ -43,11 +43,12 @@ async def get_tracking(erp_db: ErpSessionLocal = Depends(get_erp_db),
                        order_id: Annotated[str, Query(description="销售订单号")] = None,
                        produce_id: Annotated[str, Query(description="生产单号")] = None,
                        cinv_code: Annotated[str, Query(description="物料编码")] = None,
+                       status: Annotated[List[int], Query(description="状态")] = None,
                        begin_date: Annotated[str, Query(description="开始日期")] = None,
                        end_date: Annotated[str, Query(description="结束日期")] = None,
                        page: Annotated[int, Query(description="页码")] = 1,
                        page_size: Annotated[int, Query(description="每页数量")] = 20):
-    count, data = get_mom(erp_db, db, order_id, produce_id, cinv_code,
+    count, data = get_mom(erp_db, db, order_id, produce_id, cinv_code, status,
                           begin_date, end_date,
                           (page - 1) * page_size, page_size)
 

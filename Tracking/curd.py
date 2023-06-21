@@ -16,7 +16,8 @@ from sqlalchemy.orm import Session
 from Tracking.models import MomOrder, MomOrderDetail, Inventory, Tracking, TrackingLog
 
 
-def get_mom(erp_db: Session, db: Session, order_id: str = None, produce_id: str = None, cinv_code: str = None,
+def get_mom(erp_db: Session, db: Session, order_id: str = None, produce_id: str = None,
+            cinv_code: str = None, status: [int] = None,
             begin_date: str = None, end_date: str = None,
             skip: int = 0, limit: int = 20):
     """
@@ -37,6 +38,10 @@ def get_mom(erp_db: Session, db: Session, order_id: str = None, produce_id: str 
     else:
         cinv_code = "%%"
 
+    count_sql = '''
+        SELECT count(*) as count
+    '''
+
     sql = '''
         SELECT
             t6.*,
@@ -49,6 +54,9 @@ def get_mom(erp_db: Session, db: Session, order_id: str = None, produce_id: str 
             t2.cinvcode as cinv_code,
             t2.cinvname as cinv_name,
             t1.define32 as spec
+        '''
+
+    sql_from = '''
         FROM
             ufdata_001_2018..mom_orderdetail t1
             LEFT JOIN ufdata_001_2018..Inventory t2 ON t1.invcode= t2.cinvcode
@@ -60,32 +68,52 @@ def get_mom(erp_db: Session, db: Session, order_id: str = None, produce_id: str 
         AND t3.mocode like :produce_id
         AND t2.cinvcode like :cinv_code'''
 
+    sql = sql + sql_from
+
+    count_sql = count_sql + sql_from
+
+    params = {"order_id": order_id, "produce_id": produce_id, "cinv_code": cinv_code}
+
     if begin_date is not None and end_date is not None:
         sql = sql + '''
         AND t3.createtime >= :begin_date
         AND t3.createtime <= :end_date
         '''
-
-    count_sql = sql
-
-    sql = sql + '''
-        ORDER BY
-            t3.mocode
-        offset :offset rows fetch next :next rows only
+        count_sql = count_sql + '''
+        AND t3.createtime >= :begin_date
+        AND t3.createtime <= :end_date
         '''
-    if begin_date is not None and end_date is not None:
-        data = db.execute(
-            text(sql), params={"order_id": order_id, "produce_id": produce_id, "cinv_code": cinv_code,
-                               "begin_date": begin_date, "end_date": end_date, "offset": skip, "next": limit}).all()
-        count = len(db.execute(
-            text(count_sql), params={"order_id": order_id, "produce_id": produce_id, "cinv_code": cinv_code,
-                                     "begin_date": begin_date, "end_date": end_date}).all())
+        params["begin_date"] = begin_date
+        params["end_date"] = end_date
+
+    if status is not None:
+        sql = sql + '''
+        AND t1.status in :status
+        '''
+        count_sql = count_sql + '''
+        AND t1.status in :status
+        '''
+        params["status"] = status
+
+    if skip < 0:
+        sql = sql + '''
+        ORDER BY
+            t3.createtime desc
+        '''
     else:
-        data = db.execute(
-            text(sql), params={"order_id": order_id, "produce_id": produce_id, "cinv_code": cinv_code, "offset": skip,
-                               "next": limit}).all()
-        count = len(db.execute(
-            text(count_sql), params={"order_id": order_id, "produce_id": produce_id, "cinv_code": cinv_code}).all())
+        sql = sql + '''
+            ORDER BY
+                t3.createtime desc
+            offset :offset rows fetch next :next rows only
+            '''
+        params["offset"] = skip
+        params["next"] = limit
+
+    data = db.execute(
+        text(sql), params=params).all()
+    count = db.execute(
+        text(count_sql), params=params).first()["count"]
+
     return count, data
 
 
