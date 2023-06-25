@@ -22,6 +22,7 @@ def start_server(host="127.0.0.1",
                 port=port,
                 workers=num_workers,
                 loop=loop,
+                log_config="uvicorn_config.json",
                 reload=reload)
 
 

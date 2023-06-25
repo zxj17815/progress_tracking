@@ -39,13 +39,26 @@ def get_mom(erp_db: Session, db: Session, order_id: str = None, produce_id: str 
         cinv_code = "%%"
 
     count_sql = '''
-        SELECT count(*) as count
+        SELECT count(t1.status) as count
     '''
 
     sql = '''
         SELECT
-            t6.*,
             t6.id as tracking_id,
+            t6.order_id,
+            t6.start_time_1,
+            t6.end_time_1,
+            t6.start_time_2,
+            t6.end_time_2,
+            t6.start_time_3,
+            t6.end_time_3,
+            t6.start_time_4,
+            t6.end_time_4,
+            t6.remark_1,
+            t6.remark_2,
+            t6.remark_3,
+            t6.remark_4,
+            t6.work_time_type_id,
             t3.mocode as produce_id,
             t5.cSOCode as order_id,
             t1.qty as qty,
@@ -95,25 +108,18 @@ def get_mom(erp_db: Session, db: Session, order_id: str = None, produce_id: str 
         '''
         params["status"] = status
 
-    if skip < 0:
-        sql = sql + '''
+    sql = sql + '''
         ORDER BY
             t3.createtime desc
+        offset :offset rows fetch next :next rows only
         '''
-    else:
-        sql = sql + '''
-            ORDER BY
-                t3.createtime desc
-            offset :offset rows fetch next :next rows only
-            '''
-        params["offset"] = skip
-        params["next"] = limit
+    params["offset"] = skip
+    params["next"] = limit
 
     data = db.execute(
         text(sql), params=params).all()
     count = db.execute(
         text(count_sql), params=params).first()["count"]
-
     return count, data
 
 
