@@ -26,6 +26,20 @@ class PermissionBase(BaseModel):
         }
 
 
+class PermissionList(PermissionBase):
+    description: Optional[str] = Field(description="权限描述")
+
+    class Config:
+        orm_mode = True
+        schema_extra = {
+            "example": {
+                "id": 1,
+                "name": "tracking_p1_change",
+                "description": "制一修改权限"
+            }
+        }
+
+
 class UserPermissionList(BaseModel):
     employee_id: str = Field(description="员工工号")
     permission: list[PermissionBase] = Field(description="权限列表")

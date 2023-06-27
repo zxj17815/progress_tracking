@@ -5,11 +5,13 @@ from starlette.middleware.cors import CORSMiddleware
 from Middleware.auth import add_process_time_header
 from Tracking.controllers import router as tracking_router
 from User.controllers import router as user_router
+from Permission.controllers import router as permission_router
 
 app = FastAPI()
 
 app.include_router(tracking_router)
 app.include_router(user_router)
+app.include_router(permission_router)
 
 # CORS 跨域共享
 origins = ["*"]

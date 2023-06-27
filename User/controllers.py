@@ -14,6 +14,7 @@ import requests
 import config
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from Permission.models import Permission
 from Permission.schemas import PermissionBase, UserPermissionList
 from User.models import User
 from User.schemas import UserInfo
@@ -144,16 +145,6 @@ async def get_user_permission(db: SessionLocal = Depends(get_db),
     """
     获取用户权限
 
-    tracking_view:查看权限
-
-    tracking_p1_change:制一修改权限
-
-    tracking_p2_change:制二修改权限
-
-    tracking_p3_change:制三修改权限
-
-    tracking_p4_change:制四修改权限
-
     :param db:
 
     :param employee_id:
@@ -162,6 +153,102 @@ async def get_user_permission(db: SessionLocal = Depends(get_db),
     """
     user = db.query(User).filter(User.employee_id == employee_id).first()
     if user:
+        return {"employee_id": employee_id, "permission": user.permission}
+    else:
+        raise HTTPException(status_code=400, detail=[
+            {
+                "loc": [
+                    "body",
+                    "employee_id"
+                ],
+                "msg": "user is not exist",
+                "type": "value_error.missing"
+            }
+        ])
+
+
+@router.post("/user_permission", response_model=UserPermissionList)
+async def add_user_permission(db: SessionLocal = Depends(get_db),
+                              employee_id: str = Query(..., min_length=1, max_length=20),
+                              permission_id: int = Query(..., ge=0, le=15)):
+    """
+    添加某个用户的权限
+
+    :param db:
+
+    :param employee_id:
+
+    :param permission_id:
+
+    :return: 用户权限列表
+    """
+    user = db.query(User).filter(User.employee_id == employee_id).first()
+    permission_obj = db.query(Permission).filter(Permission.id == permission_id).first()
+    if not permission_obj:
+        raise HTTPException(status_code=400, detail=[
+            {
+                "loc": [
+                    "body",
+                    "permission"
+                ],
+                "msg": "permission is not exist",
+                "type": "value_error.missing"
+            }
+        ])
+    if user:
+        permission_list = [item.id for item in user.permission]
+        if permission_id not in permission_list:
+            user.permission.append(permission_obj)
+            db.commit()
+            db.refresh(user)
+        return {"employee_id": employee_id, "permission": user.permission}
+    else:
+        raise HTTPException(status_code=400, detail=[
+            {
+                "loc": [
+                    "body",
+                    "employee_id"
+                ],
+                "msg": "user is not exist",
+                "type": "value_error.missing"
+            }
+        ])
+
+
+@router.delete("/user_permission", response_model=UserPermissionList)
+async def delete_user_permission(db: SessionLocal = Depends(get_db),
+                                 employee_id: str = Query(..., min_length=1, max_length=20),
+                                 permission_id: int = Query(..., ge=0, le=15)):
+    """
+    删除某个用户的权限
+
+    :param db:
+
+    :param employee_id:
+
+    :param permission_id:
+
+    :return: 用户权限列表
+    """
+    user = db.query(User).filter(User.employee_id == employee_id).first()
+    permission_obj = db.query(Permission).filter(Permission.id == permission_id).first()
+    if not permission_obj:
+        raise HTTPException(status_code=400, detail=[
+            {
+                "loc": [
+                    "body",
+                    "permission"
+                ],
+                "msg": "permission is not exist",
+                "type": "value_error.missing"
+            }
+        ])
+    if user:
+        permission_list = [item.id for item in user.permission]
+        if permission_id not in permission_list:
+            user.permission.pop(permission_obj)
+            db.commit()
+            db.refresh(user)
         return {"employee_id": employee_id, "permission": user.permission}
     else:
         raise HTTPException(status_code=400, detail=[

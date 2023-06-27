@@ -19,10 +19,11 @@ metadata = Base.metadata
 
 class Permission(Base):
     __tablename__ = 'permission'
-    id = Column(Integer, primary_key=True)
+    id = Column(BigInteger, primary_key=True)
     name = Column(Unicode(150), nullable=False, unique=True)
     # path = Column(Unicode(150), nullable=True)
     # status = Column(TINYINT, nullable=False)
+    description = Column(Unicode(255), nullable=True)
     create_time = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
     update_time = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'), server_onupdate=text('CURRENT_TIMESTAMP'))
 
