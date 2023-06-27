@@ -16,7 +16,7 @@ from sqlalchemy.orm import Session
 from Tracking.models import MomOrder, MomOrderDetail, Inventory, Tracking, TrackingLog
 
 
-def get_mom(erp_db: Session, db: Session, order_id: str = None, produce_id: str = None,
+def get_mom(db: Session, order_id: str = None, produce_id: str = None,
             cinv_code: str = None, status: [int] = None,
             begin_date: str = None, end_date: str = None,
             skip: int = 0, limit: int = 20):
@@ -48,12 +48,20 @@ def get_mom(erp_db: Session, db: Session, order_id: str = None, produce_id: str 
             t6.order_id,
             t6.start_time_1,
             t6.end_time_1,
+            t7.work_time_1 as plan_time_1,
+            (end_time_1-start_time_1)/86400+1 as actual_time_1,
             t6.start_time_2,
             t6.end_time_2,
+            t7.work_time_2 as plan_time_2,
+            (end_time_2-start_time_2)/86400+1 as actual_time_2,
             t6.start_time_3,
             t6.end_time_3,
+            t7.work_time_3 as plan_time_3,
+            (end_time_3-start_time_3)/86400+1 as actual_time_3,
             t6.start_time_4,
             t6.end_time_4,
+            t7.work_time_4 as plan_time_4,
+            (end_time_4-start_time_4)/86400+1 as actual_time_4,
             t6.remark_1,
             t6.remark_2,
             t6.remark_3,
@@ -77,6 +85,7 @@ def get_mom(erp_db: Session, db: Session, order_id: str = None, produce_id: str 
             LEFT JOIN ufdata_001_2018..SO_SODetails t4 ON t1.OrderDid= t4.iSOsID
             LEFT JOIN ufdata_001_2018..SO_SOMain t5 on t4.id=t5.id
             LEFT JOIN tracking t6 ON t1.invcode= t6.inv_code AND t3.mocode= t6.produce_id AND t5.cSOCode= t6.order_id
+            LEFT JOIN work_time t7 ON t6.work_time_type_id= t7.name
         WHERE t5.cSOCode like :order_id
         AND t3.mocode like :produce_id
         AND t2.cinvcode like :cinv_code'''
@@ -108,13 +117,19 @@ def get_mom(erp_db: Session, db: Session, order_id: str = None, produce_id: str 
         '''
         params["status"] = status
 
-    sql = sql + '''
+    if skip < 0:
+        sql = sql + '''
         ORDER BY
             t3.createtime desc
-        offset :offset rows fetch next :next rows only
         '''
-    params["offset"] = skip
-    params["next"] = limit
+    else:
+        sql = sql + '''
+            ORDER BY
+                t3.createtime desc
+            offset :offset rows fetch next :next rows only
+            '''
+        params["offset"] = skip
+        params["next"] = limit
 
     data = db.execute(
         text(sql), params=params).all()

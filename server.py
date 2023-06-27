@@ -18,6 +18,7 @@ def start_server(host="127.0.0.1",
                  loop="asyncio",
                  reload=False):
     uvicorn.run("main:app",
+                root_path="/api",
                 host=host,
                 port=port,
                 workers=num_workers,

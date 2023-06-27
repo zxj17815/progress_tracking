@@ -1,6 +1,8 @@
 from fastapi import FastAPI
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
+from Middleware.auth import add_process_time_header
 from Tracking.controllers import router as tracking_router
 from User.controllers import router as user_router
 
@@ -18,6 +20,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# app.add_middleware(
+#     BaseHTTPMiddleware,
+#     dispatch=add_process_time_header,
+# )
 
 #
 # @app.exception_handler(RequestValidationError)

@@ -52,15 +52,23 @@ class MomTracking(BaseModel):
     tracking_id: Optional[int] = Field(title="跟踪数据id")
     start_time_1: Optional[int] = Field(title="开始时间制一,时间戳")
     end_time_1: Optional[int] = Field(title="结束时间制一,时间戳")
+    plan_time_1: Optional[int] = Field(title="计划时间制一,天")
+    actual_time_1: Optional[int] = Field(title="实际时间制一,天")
     remark_1: Optional[str] = Field(title="制一备注")
     start_time_2: Optional[int] = Field(title="开始时间制二,时间戳")
     end_time_2: Optional[int] = Field(title="结束时间制二,时间戳")
+    plan_time_2: Optional[int] = Field(title="计划时间制二,天")
+    actual_time_2: Optional[int] = Field(title="实际时间制二,天")
     remark_2: Optional[str] = Field(title="制二备注")
     start_time_3: Optional[int] = Field(title="开始时间制三,时间戳")
     end_time_3: Optional[int] = Field(title="结束时间制三,时间戳")
+    plan_time_3: Optional[int] = Field(title="计划时间制三,天")
+    actual_time_3: Optional[int] = Field(title="实际时间制三,天")
     remark_3: Optional[str] = Field(title="制三备注")
     start_time_4: Optional[int] = Field(title="开始时间制四,时间戳")
     end_time_4: Optional[int] = Field(title="结束时间制四,时间戳")
+    plan_time_4: Optional[int] = Field(title="计划时间制四,天")
+    actual_time_4: Optional[int] = Field(title="实际时间制四,天")
     remark_4: Optional[str] = Field(title="制四备注")
     work_time_type_id: Optional[str] = Field(title="工艺类型")
 
@@ -78,15 +86,23 @@ class MomTracking(BaseModel):
                 "tracking_id": 1,
                 "start_time_1": 1632892800,
                 "end_time_1": 1632896400,
+                "plan_time_1": 3,
+                "actual_time_1": 1,
                 "remark_1": "制一备注",
                 "start_time_2": 1632892800,
                 "end_time_2": 1632896400,
+                "plan_time_2": 3,
+                "actual_time_2": 2,
                 "remark_2": "制二备注",
                 "start_time_3": 1632892800,
                 "end_time_3": 1632896400,
+                "plan_time_3": 3,
+                "actual_time_3": 5,
                 "remark_3": "制三备注",
                 "start_time_4": 1632892800,
                 "end_time_4": 1632896400,
+                "plan_time_4": 3,
+                "actual_time_4": 2,
                 "remark_4": "制四备注",
                 "work_time_type_id": "LTV"
             }
@@ -105,51 +121,6 @@ class CreateTrackingLog(BaseModel):
 
     class Config:
         orm_mode = True
-
-
-class TrackingR(BaseModel):
-    order_id: Optional[str] = Field(default=..., title="销售单号")
-    produce_id: Optional[str] = Field(default=..., title="生产订单号")
-    cinv_code: Optional[str] = Field(default=..., title="存货编码")
-    start_time_1: Optional[int] = Field(title="开始时间制一,时间戳")
-    end_time_1: Optional[int] = Field(title="结束时间制一,时间戳")
-    remark_1: Optional[str] = Field(title="制一备注")
-    start_time_2: Optional[int] = Field(title="开始时间制二,时间戳")
-    end_time_2: Optional[int] = Field(title="结束时间制二,时间戳")
-    remark_2: Optional[str] = Field(title="制二备注")
-    start_time_3: Optional[int] = Field(title="开始时间制三,时间戳")
-    end_time_3: Optional[int] = Field(title="结束时间制三,时间戳")
-    remark_3: Optional[str] = Field(title="制三备注")
-    start_time_4: Optional[int] = Field(title="开始时间制四,时间戳")
-    end_time_4: Optional[int] = Field(title="结束时间制四,时间戳")
-    remark_4: Optional[str] = Field(title="制四备注")
-    work_time_type_id: Optional[str] = Field(title="工艺类型")
-    employee_id: Optional[str] = Field(title="员工id")
-    employee_name: Optional[str] = Field(title="员工姓名")
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "order_id": "SO2109290001",
-                "produce_id": "MO2109290001",
-                "cinv_code": "0101010001",
-                "start_time_1": 1632892800,
-                "end_time_1": 1632896400,
-                "remark_1": "制一备注",
-                "start_time_2": 1632892800,
-                "end_time_2": 1632896400,
-                "remark_2": "制二备注",
-                "start_time_3": 1632892800,
-                "end_time_3": 1632896400,
-                "remark_3": "制三备注",
-                "start_time_4": 1632892800,
-                "end_time_4": 1632896400,
-                "remark_4": "制四备注",
-                "work_time_type_id": "LTV",
-                "employee_id": "HX01234",
-                "employee_name": "张三"
-            }
-        }
 
 
 class CreateTracking(BaseModel):
@@ -195,3 +166,11 @@ class CreateTracking(BaseModel):
                 "employee_name": "张三"
             }
         }
+
+
+class ReMarkTypeBase(BaseModel):
+    id: Optional[int] = Field(title="id")
+    description: Optional[str] = Field(title="备注内容")
+
+    class Config:
+        orm_mode = True

@@ -12,8 +12,10 @@ from typing import List
 
 import requests
 import config
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 
+from Permission.schemas import PermissionBase, UserPermissionList
+from User.models import User
 from User.schemas import UserInfo
 from Utils import access
 from Db.database import SessionLocal
@@ -134,3 +136,41 @@ async def get_user_by_code(code: str, db: SessionLocal = Depends(get_db)) -> Use
         else:
             user_info.employee_id = "钉钉暂无工号"
     return user_info
+
+
+@router.get("/user_permission", response_model=UserPermissionList)
+async def get_user_permission(db: SessionLocal = Depends(get_db),
+                              employee_id: str = Query(..., min_length=1, max_length=20)):
+    """
+    获取用户权限
+
+    tracking_view:查看权限
+
+    tracking_p1_change:制一修改权限
+
+    tracking_p2_change:制二修改权限
+
+    tracking_p3_change:制三修改权限
+
+    tracking_p4_change:制四修改权限
+
+    :param db:
+
+    :param employee_id:
+
+    :return: 用户权限列表
+    """
+    user = db.query(User).filter(User.employee_id == employee_id).first()
+    if user:
+        return {"employee_id": employee_id, "permission": user.permission}
+    else:
+        raise HTTPException(status_code=400, detail=[
+            {
+                "loc": [
+                    "body",
+                    "employee_id"
+                ],
+                "msg": "user is not exist",
+                "type": "value_error.missing"
+            }
+        ])

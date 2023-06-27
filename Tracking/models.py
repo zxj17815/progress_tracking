@@ -229,3 +229,13 @@ class TrackingLog(Base):
     source_data = Column(Unicode(2000))
     action_type = Column(Unicode(20))
     timestamp = Column(Integer)
+
+
+class ReMarkType(Base):
+    __tablename__ = 'remark_type'
+
+    id = Column(BigInteger, primary_key=True)
+    remark_type = Column(Unicode(150))
+    description = Column(Unicode(500))
+    create_time = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
+    update_time = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'), server_onupdate=text('CURRENT_TIMESTAMP'))
