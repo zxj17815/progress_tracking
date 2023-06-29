@@ -8,18 +8,17 @@
     @Author      :Jay Zhang
 """
 import json
-from typing import List
 
 import requests
-import config
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+import config
+from Db.database import SessionLocal
 from Permission.models import Permission
-from Permission.schemas import PermissionBase, UserPermissionList
+from Permission.schemas import UserPermissionList
 from User.models import User
 from User.schemas import UserInfo, UserPermission
 from Utils import access
-from Db.database import SessionLocal
 
 CONFIG = config.get_settings()
 
@@ -112,11 +111,10 @@ async def get_user_id_by_code(code: str) -> str:
 
 
 @router.get("/user_by_code", response_model=UserInfo)
-async def get_user_by_code(code: str, db: SessionLocal = Depends(get_db)) -> UserInfo:
+async def get_user_by_code(code: str) -> UserInfo:
     """
     通过用户免登code获取数据
 
-    :param db:
     :param code:免登录code
     :return: 用户信息json
     """
