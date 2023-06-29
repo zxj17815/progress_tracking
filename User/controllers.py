@@ -245,8 +245,8 @@ async def delete_user_permission(db: SessionLocal = Depends(get_db),
         ])
     if user:
         permission_list = [item.id for item in user.permission]
-        if permission_id not in permission_list:
-            user.permission.pop(permission_obj)
+        if permission_id in permission_list:
+            user.permission.remove(permission_obj)
             db.commit()
             db.refresh(user)
         return {"employee_id": employee_id, "permission": user.permission}

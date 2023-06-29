@@ -42,7 +42,7 @@ class PermissionList(PermissionBase):
 
 class UserPermissionList(BaseModel):
     employee_id: str = Field(description="员工工号")
-    permission: list[PermissionBase] = Field(description="权限列表")
+    permission: list[PermissionList] = Field(description="权限列表")
 
     class Config:
         orm_mode = True
