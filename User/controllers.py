@@ -17,7 +17,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from Permission.models import Permission
 from Permission.schemas import PermissionBase, UserPermissionList
 from User.models import User
-from User.schemas import UserInfo
+from User.schemas import UserInfo, UserPermission
 from Utils import access
 from Db.database import SessionLocal
 
@@ -168,22 +168,18 @@ async def get_user_permission(db: SessionLocal = Depends(get_db),
 
 
 @router.post("/user_permission", response_model=UserPermissionList)
-async def add_user_permission(db: SessionLocal = Depends(get_db),
-                              employee_id: str = Query(..., min_length=1, max_length=20),
-                              permission_id: int = Query(..., ge=0, le=15)):
+async def add_user_permission(user_permission: UserPermission,
+                              db: SessionLocal = Depends(get_db)):
     """
     添加某个用户的权限
 
+    :param user_permission:
     :param db:
-
-    :param employee_id:
-
-    :param permission_id:
-
     :return: 用户权限列表
     """
-    user = db.query(User).filter(User.employee_id == employee_id).first()
-    permission_obj = db.query(Permission).filter(Permission.id == permission_id).first()
+
+    user = db.query(User).filter(User.employee_id == user_permission.employee_id).first()
+    permission_obj = db.query(Permission).filter(Permission.id == user_permission.permission_id).first()
     if not permission_obj:
         raise HTTPException(status_code=400, detail=[
             {
@@ -197,11 +193,11 @@ async def add_user_permission(db: SessionLocal = Depends(get_db),
         ])
     if user:
         permission_list = [item.id for item in user.permission]
-        if permission_id not in permission_list:
+        if user_permission.permission_id not in permission_list:
             user.permission.append(permission_obj)
             db.commit()
             db.refresh(user)
-        return {"employee_id": employee_id, "permission": user.permission}
+        return {"employee_id": user_permission.employee_id, "permission": user.permission}
     else:
         raise HTTPException(status_code=400, detail=[
             {

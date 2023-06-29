@@ -27,3 +27,16 @@ class UserInfo(BaseModel):
                 "dept": "技术部"
             }
         }
+
+
+class UserPermission(BaseModel):
+    employee_id: str = Field(..., description="员工工号")
+    permission_id: int = Field(..., description="权限列表")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "employee_id": "HX05555",
+                "permission_id": 1
+            }
+        }
