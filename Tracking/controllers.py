@@ -14,9 +14,9 @@ from fastapi.responses import StreamingResponse
 from openpyxl.styles import Alignment
 
 from Db.database import ErpSessionLocal, SessionLocal
-from Tracking.curd import get_mom, get_mom_detail, create_or_update_tracking
-from Tracking.models import Tracking, TrackingLog, ReMarkType
-from Tracking.schemas import ListMomOrderDetail, CreateTracking, ReMarkTypeBase
+from Tracking.curd import get_mom, get_mom_detail, create_or_update_tracking, get_all_remark
+from Tracking.models import Tracking, TrackingLog, ReMark, TrackingReMark
+from Tracking.schemas import ListMomOrderDetail, CreateTracking, ReMarkList, TrackingDetail
 from openpyxl import Workbook
 from tempfile import NamedTemporaryFile
 
@@ -57,7 +57,7 @@ async def get_tracking(db: SessionLocal = Depends(get_db),
     return {"result": data, "total": count, "page": page}
 
 
-@router.post("/order")
+@router.post("/order", response_model=TrackingDetail)
 async def create_tracking(tracking: CreateTracking, erp_db: ErpSessionLocal = Depends(get_erp_db),
                           db: SessionLocal = Depends(get_db)):
     """
@@ -83,9 +83,10 @@ async def create_tracking(tracking: CreateTracking, erp_db: ErpSessionLocal = De
     tracking = tracking.dict()
     tracking.pop('employee_id')
     tracking.pop('employee_name')
+    tracking_remark = tracking.pop('remark')
     tracking_obj = Tracking(**tracking)
 
-    return create_or_update_tracking(db, tracking_obj, tracking_log_obj)
+    return create_or_update_tracking(db, tracking_obj, tracking_remark, tracking_log_obj)
 
 
 @router.get("/order/file")
@@ -141,12 +142,14 @@ async def get_tracking_file(db: SessionLocal = Depends(get_db),
                              headers={'Content-Disposition': 'attachment; filename=tracking.xlsx'})
 
 
-@router.get("/remark", response_model=List[ReMarkTypeBase])
-async def get_tracking_file(db: SessionLocal = Depends(get_db)):
+@router.get("/remark", response_model=List[ReMarkList])
+async def get_remark(db: SessionLocal = Depends(get_db),
+                     remark_type: Annotated[str, Query(description="制造车间")] = None):
     """
     获取备注
+    :param remark_type: 制造车间
     :param db:
     :return:
     """
-    remark = db.query(ReMarkType).all()
+    remark = get_all_remark(db, remark_type)
     return remark

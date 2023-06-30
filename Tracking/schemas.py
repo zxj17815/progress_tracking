@@ -13,6 +13,45 @@ from typing import Optional
 from pydantic import BaseModel, Field
 
 
+class ReMarkBase(BaseModel):
+    id: Optional[int] = Field(title="id")
+    key: Optional[str] = Field(title="备注编码")
+    parent_id: Optional[int] = Field(title="父级id")
+    description: Optional[str] = Field(title="备注内容")
+    allow_edit: Optional[bool] = Field(title="是否允许自定义编辑")
+
+    class Config:
+        orm_mode = True
+
+
+class ReMarkList(BaseModel):
+    id: Optional[int] = Field(title="id")
+    key: Optional[str] = Field(title="备注编码")
+    parent_id: Optional[int] = Field(title="父级id")
+    remark_type: Optional[str] = Field(title="车间")
+    description: Optional[str] = Field(title="备注内容")
+    children: Optional[list[ReMarkBase]] = Field(title="备注内容")
+    allow_edit: Optional[bool] = Field(title="是否允许自定义编辑")
+
+    class Config:
+        orm_mode = True
+
+
+class TrackingReMarkCreate(BaseModel):
+    remark_id: Optional[int] = Field(title="id")
+    customer_remark: Optional[str] = Field(title="自定义备注")
+
+    class Config:
+        orm_mode = True
+
+
+class TrackingReMark(TrackingReMarkCreate):
+    key: Optional[str] = Field(title="备注编码")
+    parent_id: Optional[int] = Field(title="父级id")
+    remark_type: Optional[str] = Field(title="车间")
+    description: Optional[str] = Field(title="备注内容")
+
+
 class Inventory(BaseModel):
     InvCode: str = None
     InvName: str = None
@@ -54,23 +93,20 @@ class MomTracking(BaseModel):
     end_time_1: Optional[int] = Field(title="结束时间制一,时间戳")
     plan_time_1: Optional[int] = Field(title="计划时间制一,天")
     actual_time_1: Optional[int] = Field(title="实际时间制一,天")
-    remark_1: Optional[str] = Field(title="制一备注")
     start_time_2: Optional[int] = Field(title="开始时间制二,时间戳")
     end_time_2: Optional[int] = Field(title="结束时间制二,时间戳")
     plan_time_2: Optional[int] = Field(title="计划时间制二,天")
     actual_time_2: Optional[int] = Field(title="实际时间制二,天")
-    remark_2: Optional[str] = Field(title="制二备注")
     start_time_3: Optional[int] = Field(title="开始时间制三,时间戳")
     end_time_3: Optional[int] = Field(title="结束时间制三,时间戳")
     plan_time_3: Optional[int] = Field(title="计划时间制三,天")
     actual_time_3: Optional[int] = Field(title="实际时间制三,天")
-    remark_3: Optional[str] = Field(title="制三备注")
     start_time_4: Optional[int] = Field(title="开始时间制四,时间戳")
     end_time_4: Optional[int] = Field(title="结束时间制四,时间戳")
     plan_time_4: Optional[int] = Field(title="计划时间制四,天")
     actual_time_4: Optional[int] = Field(title="实际时间制四,天")
-    remark_4: Optional[str] = Field(title="制四备注")
     work_time_type_id: Optional[str] = Field(title="工艺类型")
+    remark: Optional[list[TrackingReMark]] = Field(title="备注")
 
     class Config:
         schema_extra = {
@@ -88,23 +124,33 @@ class MomTracking(BaseModel):
                 "end_time_1": 1632896400,
                 "plan_time_1": 3,
                 "actual_time_1": 1,
-                "remark_1": "制一备注",
                 "start_time_2": 1632892800,
                 "end_time_2": 1632896400,
                 "plan_time_2": 3,
                 "actual_time_2": 2,
-                "remark_2": "制二备注",
                 "start_time_3": 1632892800,
                 "end_time_3": 1632896400,
                 "plan_time_3": 3,
                 "actual_time_3": 5,
-                "remark_3": "制三备注",
                 "start_time_4": 1632892800,
                 "end_time_4": 1632896400,
                 "plan_time_4": 3,
                 "actual_time_4": 2,
-                "remark_4": "制四备注",
-                "work_time_type_id": "LTV"
+                "work_time_type_id": "LTV",
+                "remark": [
+                    {
+                        "remark_type": "制一",
+                        "remark_id": 1,
+                        "description": "质量问题",
+                        "customer_remark": "null"
+                    },
+                    {
+                        "remark_type": "制二",
+                        "remark_id": 68,
+                        "description": "其他",
+                        "customer_remark": "其他的自定义备注"
+                    }
+                ]
             }
         }
 
@@ -123,54 +169,68 @@ class CreateTrackingLog(BaseModel):
         orm_mode = True
 
 
+class TrackingDetail(BaseModel):
+    order_id: Optional[str] = Field(title="销售单号")
+    produce_id: Optional[str] = Field(title="生产订单号")
+    cinv_code: Optional[str] = Field(title="存货编码")
+    start_time_1: Optional[int] = Field(title="开始时间制一,时间戳", le=9999999999)
+    end_time_1: Optional[int] = Field(title="结束时间制一,时间戳", le=9999999999)
+    start_time_2: Optional[int] = Field(title="开始时间制二,时间戳", le=9999999999)
+    end_time_2: Optional[int] = Field(title="结束时间制二,时间戳", le=9999999999)
+    start_time_3: Optional[int] = Field(title="开始时间制三,时间戳", le=9999999999)
+    end_time_3: Optional[int] = Field(title="结束时间制三,时间戳", le=9999999999)
+    start_time_4: Optional[int] = Field(title="开始时间制四,时间戳", le=9999999999)
+    end_time_4: Optional[int] = Field(title="结束时间制四,时间戳", le=9999999999)
+    work_time_type_id: Optional[str] = Field(title="工艺类型")
+    remark: Optional[list[TrackingReMarkCreate]] = Field(title="备注")
+
+    class Config:
+        orm_mode = True
+
+
 class CreateTracking(BaseModel):
     order_id: Optional[str] = Field(default=..., title="销售单号")
     produce_id: Optional[str] = Field(default=..., title="生产订单号")
     cinv_code: Optional[str] = Field(default=..., title="存货编码")
     start_time_1: Optional[int] = Field(title="开始时间制一,时间戳", le=9999999999)
     end_time_1: Optional[int] = Field(title="结束时间制一,时间戳", le=9999999999)
-    remark_1: Optional[str] = Field(title="制一备注")
     start_time_2: Optional[int] = Field(title="开始时间制二,时间戳", le=9999999999)
     end_time_2: Optional[int] = Field(title="结束时间制二,时间戳", le=9999999999)
-    remark_2: Optional[str] = Field(title="制二备注")
     start_time_3: Optional[int] = Field(title="开始时间制三,时间戳", le=9999999999)
     end_time_3: Optional[int] = Field(title="结束时间制三,时间戳", le=9999999999)
-    remark_3: Optional[str] = Field(title="制三备注")
     start_time_4: Optional[int] = Field(title="开始时间制四,时间戳", le=9999999999)
     end_time_4: Optional[int] = Field(title="结束时间制四,时间戳", le=9999999999)
-    remark_4: Optional[str] = Field(title="制四备注")
     work_time_type_id: Optional[str] = Field(title="工艺类型")
+    remark: Optional[list[TrackingReMarkCreate]] = Field(title="备注")
     employee_id: Optional[str] = Field(title="员工id")
     employee_name: Optional[str] = Field(title="员工姓名")
 
     class Config:
         schema_extra = {
             "example": {
-                "order_id": "SO2109290001",
-                "produce_id": "MO2109290001",
-                "cinv_code": "0101010001",
+                "order_id": "23JMJ0006-1-YB",
+                "produce_id": "0000149047",
+                "cinv_code": "0304034033",
                 "start_time_1": 1632892800,
                 "end_time_1": 1632896400,
-                "remark_1": "制一备注",
                 "start_time_2": 1632892800,
                 "end_time_2": 1632896400,
-                "remark_2": "制二备注",
                 "start_time_3": 1632892800,
                 "end_time_3": 1632896400,
-                "remark_3": "制三备注",
                 "start_time_4": 1632892800,
                 "end_time_4": 1632896400,
-                "remark_4": "制四备注",
                 "work_time_type_id": "LTV",
+                "remark": [
+                    {
+                        "remark_id": 1,
+                        "customer_remark": "null",
+                    },
+                    {
+                        "remark_id": 68,
+                        "customer_remark": "akjsdhuiawhd",
+                    }
+                ],
                 "employee_id": "HX01234",
                 "employee_name": "张三"
             }
         }
-
-
-class ReMarkTypeBase(BaseModel):
-    id: Optional[int] = Field(title="id")
-    description: Optional[str] = Field(title="备注内容")
-
-    class Config:
-        orm_mode = True

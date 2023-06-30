@@ -1,17 +1,13 @@
 from fastapi import FastAPI
-from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.cors import CORSMiddleware
 
-from Middleware.auth import add_process_time_header
-from Tracking.controllers import router as tracking_router
-from User.controllers import router as user_router
-from Permission.controllers import router as permission_router
+from api_version_router import router, router_v2
 
 app = FastAPI()
 
-app.include_router(tracking_router)
-app.include_router(user_router)
-app.include_router(permission_router)
+# 路由导入
+app.include_router(router)
+app.include_router(router_v2)
 
 # CORS 跨域共享
 origins = ["*"]
@@ -23,24 +19,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# 鉴权中间件
 # app.add_middleware(
 #     BaseHTTPMiddleware,
 #     dispatch=add_process_time_header,
 # )
-
-#
-# @app.exception_handler(RequestValidationError)
-# async def validation_exception_handler(request, exc):
-#     err_str = ""
-#     for err in exc.errors():
-#         print(err["loc"][1])
-#         err_str += f"{err['loc'][1]}:{err['msg']};"
-#     return PlainTextResponse(err_str, status_code=400)
-# @app.get("/")
-# async def root():
-#     return {"message": "Hello World"}
-#
-#
-# @app.get("/hello/{name}")
-# async def say_hello(name: str):
-#     return {"message": f"Hello {name}"}

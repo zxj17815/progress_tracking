@@ -12,7 +12,7 @@
 
 from sqlalchemy import Boolean, Column, DECIMAL, DateTime, Float, ForeignKey, Index, Integer, Unicode, text, BigInteger
 from sqlalchemy.dialects.mssql import TIMESTAMP, TINYINT
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import relationship, backref
 from Db.database import Base
 
 metadata = Base.metadata
@@ -210,12 +210,8 @@ class Tracking(Base):
     end_time_3 = Column(Integer)
     start_time_4 = Column(Integer)
     end_time_4 = Column(Integer)
-    remark_1 = Column(Unicode(200))
-    remark_2 = Column(Unicode(200))
-    remark_3 = Column(Unicode(200))
-    remark_4 = Column(Unicode(200))
     work_time_type_id = Column(Unicode(200))
-
+    remark = relationship('TrackingReMark')
     tracking_logs = relationship('TrackingLog')
 
 
@@ -231,11 +227,26 @@ class TrackingLog(Base):
     timestamp = Column(Integer)
 
 
-class ReMarkType(Base):
-    __tablename__ = 'remark_type'
+class ReMark(Base):
+    __tablename__ = 'remark'
 
     id = Column(BigInteger, primary_key=True)
+    parent_id = Column(BigInteger, ForeignKey('remark.id'))
     remark_type = Column(Unicode(150))
     description = Column(Unicode(500))
+    allow_edit = Column(Boolean, server_default=text("(0)"))
+    key = Column(Unicode(250))
     create_time = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
     update_time = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'), server_onupdate=text('CURRENT_TIMESTAMP'))
+    children = relationship('ReMark', backref=backref('parent', remote_side=[id]))
+
+
+class TrackingReMark(Base):
+    __tablename__ = 'tracking_remark'
+
+    id = Column(BigInteger, primary_key=True)
+    tracking_id = Column(BigInteger, ForeignKey('tracking.id'))
+    remark_id = Column(BigInteger, ForeignKey('remark.id'))
+    customer_remark = Column(Unicode(500))
+    create_time = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
+    remark = relationship('ReMark')

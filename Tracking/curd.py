@@ -13,7 +13,7 @@ import time
 
 from sqlalchemy import text
 from sqlalchemy.orm import Session
-from Tracking.models import MomOrder, MomOrderDetail, Inventory, Tracking, TrackingLog
+from Tracking.models import MomOrder, MomOrderDetail, Inventory, Tracking, TrackingLog, ReMark, TrackingReMark
 
 
 def get_mom(db: Session, order_id: str = None, produce_id: str = None,
@@ -62,10 +62,6 @@ def get_mom(db: Session, order_id: str = None, produce_id: str = None,
             t6.end_time_4,
             t7.work_time_4 as plan_time_4,
             (end_time_4-start_time_4)/86400+1 as actual_time_4,
-            t6.remark_1,
-            t6.remark_2,
-            t6.remark_3,
-            t6.remark_4,
             t6.work_time_type_id,
             t3.mocode as produce_id,
             t5.cSOCode as order_id,
@@ -135,6 +131,14 @@ def get_mom(db: Session, order_id: str = None, produce_id: str = None,
         text(sql), params=params).all()
     count = db.execute(
         text(count_sql), params=params).first()["count"]
+    data = [dict(i) for i in data]
+    for item in data:
+        if item["tracking_id"] is not None:
+            remarks = db.query(TrackingReMark).filter(TrackingReMark.tracking_id == item["tracking_id"]).all()
+            item["remark"] = [
+                {"remark_type": i.remark.remark_type, "key": i.remark.key, "remark_id": i.remark_id,
+                 "parent_id": i.remark.parent_id, "description": i.remark.description,
+                 "customer_remark": i.customer_remark if i.remark.allow_edit else None} for i in remarks]
     return count, data
 
 
@@ -158,56 +162,76 @@ def get_tracking(db: Session, skip: int = 0, limit: int = 20):
     return count, data
 
 
-def create_or_update_tracking(db: Session, tracking: Tracking, tracking_log: TrackingLog):
+def create_or_update_tracking(db: Session, tracking: Tracking, tracking_remark: list[TrackingReMark],
+                              tracking_log: TrackingLog):
     """
     添加活更新工单追溯条
     """
+    remarks = []
+    for item in tracking_remark:
+        print(item)
+        remark = db.query(ReMark).filter(ReMark.id == item["remark_id"]).first()
+        if remark:
+            temp_obj = TrackingReMark(remark_id=remark.id)
+            if remark.allow_edit:
+                temp_obj.customer_remark = item["customer_remark"]
+            remarks.append(temp_obj)
+
     tracking_data = db.query(Tracking).filter(Tracking.order_id == tracking.order_id,
                                               Tracking.produce_id == tracking.produce_id,
                                               Tracking.cinv_code == tracking.cinv_code).first()
-    print(tracking.start_time_1)
     if tracking_data:
         if tracking.start_time_1:
             tracking_data.start_time_1 = tracking.start_time_1
         if tracking.end_time_1:
             tracking_data.end_time_1 = tracking.end_time_1
-        if tracking.remark_1 is not None:
-            tracking_data.remark_1 = tracking.remark_1
         if tracking.start_time_2:
             tracking_data.start_time_2 = tracking.start_time_2
         if tracking.end_time_2:
             tracking_data.end_time_2 = tracking.end_time_2
-        if tracking.remark_2 is not None:
-            tracking_data.remark_2 = tracking.remark_2
         if tracking.start_time_3:
             tracking_data.start_time_3 = tracking.start_time_3
         if tracking.end_time_3:
             tracking_data.end_time_3 = tracking.end_time_3
-        if tracking.remark_3 is not None:
-            tracking_data.remark_3 = tracking.remark_3
         if tracking.start_time_4:
             tracking_data.start_time_4 = tracking.start_time_4
         if tracking.end_time_4:
             tracking_data.end_time_4 = tracking.end_time_4
-        if tracking.remark_4 is not None:
-            tracking_data.remark_4 = tracking.remark_4
         if tracking.work_time_type_id:
             tracking_data.work_time_type_id = tracking.work_time_type_id
         tracking = tracking_data
+        tracking.remark = remarks
         tracking_log.timestamp = time.time()
         tracking_log.action_type = "change"
         tracking_dict = copy.deepcopy(tracking.__dict__)
         tracking_dict.pop("_sa_instance_state")
+        tracking_dict["remark"] = [i.remark_id for i in tracking.remark]
         tracking_log.source_data = json.dumps(tracking_dict)
         tracking.tracking_logs.append(tracking_log)
     else:
+        tracking.remark = remarks
         tracking_log.timestamp = time.time()
         tracking_log.action_type = "add"
         tracking_dict = copy.deepcopy(tracking.__dict__)
         tracking_dict.pop("_sa_instance_state")
+        tracking_dict["remark"] = [i.remark_id for i in tracking.remark]
         tracking_log.source_data = json.dumps(tracking_dict)
         tracking.tracking_logs.append(tracking_log)
         db.add(tracking)
     db.commit()
     db.refresh(tracking)
+    print(tracking.remark)
     return tracking
+
+
+def get_all_remark(db: Session, remark_type: str = None, is_parent: bool = True):
+    """
+    获取所有备注
+    """
+    query = db.query(ReMark)
+    if remark_type:
+        query = query.filter(ReMark.remark_type == remark_type)
+    if is_parent:
+        query = query.filter(ReMark.parent_id == 0)
+    data = query.all()
+    return data
