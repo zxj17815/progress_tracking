@@ -8,16 +8,18 @@
     @Author      :Jay Zhang
 """
 import json
+from typing import List
 
 import requests
 from fastapi import APIRouter, Depends, HTTPException, Query
 
 import config
-from Db.database import SessionLocal
+from Db.database import SessionLocal, DdSessionLocal
 from Permission.models import Permission
 from Permission.schemas import UserPermissionList
+from User.curd import get_all_employee_permission
 from User.models import User
-from User.schemas import UserInfo, UserPermission
+from User.schemas import UserInfo, UserPermission, EmployeePermission
 from Utils import access
 
 CONFIG = config.get_settings()
@@ -40,6 +42,14 @@ router = APIRouter(prefix="/users")
 # Dependency
 def get_db():
     db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def get_dd_db():
+    db = DdSessionLocal()
     try:
         yield db
     finally:
@@ -255,3 +265,16 @@ async def delete_user_permission(db: SessionLocal = Depends(get_db),
                 "type": "value_error.missing"
             }
         ])
+
+
+@router.get("/all", response_model=List[EmployeePermission])
+async def get_all_user_with_perm(db: SessionLocal = Depends(get_db), dd_db: SessionLocal = Depends(get_dd_db)):
+    """
+    获取所有员工及其权限
+
+    :param dd_db:
+    :param db:
+
+    :return: 员工及其权限列表
+    """
+    return get_all_employee_permission(db, dd_db)

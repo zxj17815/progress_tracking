@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     redis_url: str
     sqlalchemy_database_url: str
     erp_sqlalchemy_database_url: str
+    dd_sqlalchemy_database_url: str
     dd_url: str
     dd_app_key: str
     dd_app_secret: str

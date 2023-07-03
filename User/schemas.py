@@ -11,6 +11,8 @@ from typing import Optional
 
 from pydantic import BaseModel, Field
 
+from Permission.schemas import PermissionList
+
 
 class UserInfo(BaseModel):
     user_id: Optional[str] = Field(title="钉钉UUID")
@@ -38,5 +40,20 @@ class UserPermission(BaseModel):
             "example": {
                 "employee_id": "HX05555",
                 "permission_id": 1
+            }
+        }
+
+
+class EmployeePermission(BaseModel):
+    employee_id: str = Field(description="员工工号")
+    employee_name: str = Field(description="员工姓名")
+    permission: list[PermissionList] = Field(description="权限列表")
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "employee_id": "HX05555",
+                "employee_name": "张三",
+                "permission": []
             }
         }
