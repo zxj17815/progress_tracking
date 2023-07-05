@@ -7,18 +7,18 @@
     @DateTime    :2023-01-12 16:15
     @Author      :Jay Zhang
 """
+from tempfile import NamedTemporaryFile
 from typing import List, Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
-from openpyxl.styles import Alignment
+from openpyxl import Workbook
 
 from Db.database import ErpSessionLocal, SessionLocal
-from Tracking.curd import get_mom, get_mom_detail, create_or_update_tracking, get_all_remark
-from Tracking.models import Tracking, TrackingLog, ReMark, TrackingReMark
-from Tracking.schemas import ListMomOrderDetail, CreateTracking, ReMarkList, TrackingDetail
-from openpyxl import Workbook
-from tempfile import NamedTemporaryFile
+from Tracking.curd import get_mom, get_mom_detail, create_or_update_tracking, get_all_remark, create_remark, \
+    update_remark_by_id
+from Tracking.models import Tracking, TrackingLog, ReMark
+from Tracking.schemas import ListMomOrderDetail, CreateTracking, ReMarkList, TrackingDetail, CreateReMark, ReMarkBase
 
 router = APIRouter(prefix="/tracking")
 
@@ -62,6 +62,7 @@ async def create_tracking(tracking: CreateTracking, erp_db: ErpSessionLocal = De
                           db: SessionLocal = Depends(get_db)):
     """
     新增进度数据
+    :param erp_db:
     :param tracking:
     :param db:
     :return:
@@ -153,3 +154,77 @@ async def get_remark(db: SessionLocal = Depends(get_db),
     """
     remark = get_all_remark(db, remark_type)
     return remark
+
+
+@router.post("/remark", response_model=ReMarkBase)
+async def add_remark(remark: CreateReMark, db: SessionLocal = Depends(get_db)):
+    """
+    新增备注
+    :param remark:
+    :param db:
+    :return:
+    """
+    if remark.remark_type not in ["制一", "制二", "制三", "制四"]:
+        raise HTTPException(status_code=400, detail=[
+            {
+                "loc": [
+                    "body",
+                    "remark_type"
+                ],
+                "msg": "remark_type is must in [制一, 制二, 制三, 制四]",
+                "type": "value_error"
+            }
+        ])
+    exist_obj = db.query(ReMark).filter(ReMark.remark_type == remark.remark_type,
+                                        ReMark.description == remark.description).first()
+    if exist_obj:
+        raise HTTPException(status_code=400, detail=[
+            {
+                "loc": [
+                    "body",
+                    "description"
+                ],
+                "msg": "description is exist(id={0} key={1})".format(exist_obj.id, exist_obj.key),
+                "type": "value_error"
+            }
+        ])
+    remark_obj = ReMark(**remark.dict())
+    return create_remark(db, remark_obj)
+
+
+@router.put("/remark/{remark_id}", response_model=ReMarkBase)
+async def update_remark(remark_id: int, remark: CreateReMark, db: SessionLocal = Depends(get_db)):
+    """
+    修改备注
+
+
+    :param remark_id:
+    :param remark:
+    :param db:
+    :return:
+    """
+    if remark.remark_type is not None and remark.remark_type not in ["制一", "制二", "制三", "制四"]:
+        raise HTTPException(status_code=400, detail=[
+            {
+                "loc": [
+                    "body",
+                    "remark_type"
+                ],
+                "msg": "remark_type is must in [制一, 制二, 制三, 制四]",
+                "type": "value_error"
+            }
+        ])
+    exist_obj = db.query(ReMark).filter(ReMark.id == remark_id).first()
+    if not exist_obj:
+        raise HTTPException(status_code=400, detail=[
+            {
+                "loc": [
+                    "body",
+                    "remark_id"
+                ],
+                "msg": "remark_id is not exist",
+                "type": "value_error"
+            }
+        ])
+
+    return update_remark_by_id(db, remark_id, ReMark(**remark.dict()))

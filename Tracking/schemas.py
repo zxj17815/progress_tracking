@@ -8,6 +8,7 @@
     @Author      :Jay Zhang
 """
 import datetime
+from enum import Enum
 from typing import Optional
 
 from pydantic import BaseModel, Field
@@ -234,3 +235,13 @@ class CreateTracking(BaseModel):
                 "employee_name": "张三"
             }
         }
+
+
+class CreateReMark(BaseModel):
+    parent_id: Optional[int] = Field(title="父级id")
+    remark_type: Optional[str] = Field(title="车间,(制一、制二、制三、制四)")
+    description: Optional[str] = Field(title="备注描述")
+    allow_edit: Optional[bool] = Field(False, title="是否允许编辑")
+
+    class Config:
+        orm_mode = True

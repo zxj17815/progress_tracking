@@ -172,7 +172,7 @@ def create_or_update_tracking(db: Session, tracking: Tracking, tracking_remark: 
         print(item)
         remark = db.query(ReMark).filter(ReMark.id == item["remark_id"]).first()
         if remark:
-            temp_obj = TrackingReMark(remark_id=remark.id)
+            temp_obj = TrackingReMark(remark_id=remark.id, create_time=int(time.time()))
             if remark.allow_edit:
                 temp_obj.customer_remark = item["customer_remark"]
             remarks.append(temp_obj)
@@ -235,3 +235,37 @@ def get_all_remark(db: Session, remark_type: str = None, is_parent: bool = True)
         query = query.filter(ReMark.parent_id == 0)
     data = query.all()
     return data
+
+
+def create_remark(db: Session, remark: ReMark):
+    """
+    创建备注
+    """
+    remark.create_time = int(time.time())
+    remark.update_time = int(time.time())
+    db.add(remark)
+    db.flush()
+    remark.key = "{0}-{1}".format(remark.parent_id, remark.id)
+    db.commit()
+    db.refresh(remark)
+    return remark
+
+
+def update_remark_by_id(db: Session, remark_id: int, remark: ReMark):
+    """
+    更新备注
+    """
+    obj: ReMark = db.query(ReMark).get(remark_id)
+    if remark.remark_type:
+        obj.remark_type = remark.remark_type
+    if remark.description:
+        obj.description = remark.description
+    if remark.parent_id:
+        obj.parent_id = remark.parent_id
+        obj.key = "{0}-{1}".format(obj.parent_id, obj.id)
+    if remark.allow_edit is not None:
+        obj.allow_edit = remark.allow_edit
+    obj.update_time = int(time.time())
+    db.commit()
+    db.refresh(obj)
+    return obj

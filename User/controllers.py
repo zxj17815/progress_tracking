@@ -203,7 +203,9 @@ async def add_user_permission(user_permission: UserPermission,
             }
         ])
     if user:
-        user = User(employee_id=user_permission.employee_id,)
+        user = db.query(User).filter(User.employee_id == user_permission.employee_id).first()
+        if user is None:
+            user = User(employee_id=user_permission.employee_id)
         permission_list = [item.id for item in user.permission]
         if user_permission.permission_id not in permission_list:
             user.permission.append(permission_obj)

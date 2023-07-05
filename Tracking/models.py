@@ -236,8 +236,8 @@ class ReMark(Base):
     description = Column(Unicode(500))
     allow_edit = Column(Boolean, server_default=text("(0)"))
     key = Column(Unicode(250))
-    create_time = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
-    update_time = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'), server_onupdate=text('CURRENT_TIMESTAMP'))
+    create_time = Column(Integer)
+    update_time = Column(Integer)
     children = relationship('ReMark', backref=backref('parent', remote_side=[id]))
 
 
@@ -248,5 +248,5 @@ class TrackingReMark(Base):
     tracking_id = Column(BigInteger, ForeignKey('tracking.id'))
     remark_id = Column(BigInteger, ForeignKey('remark.id'))
     customer_remark = Column(Unicode(500))
-    create_time = Column(TIMESTAMP, server_default=text('CURRENT_TIMESTAMP'))
+    create_time = Column(Integer)
     remark = relationship('ReMark')
