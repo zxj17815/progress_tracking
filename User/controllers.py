@@ -18,7 +18,7 @@ from Db.database import SessionLocal, DdSessionLocal
 from Permission.models import Permission
 from Permission.schemas import UserPermissionList
 from User.curd import get_all_employee_permission
-from User.models import User
+from User.models import User, Employee
 from User.schemas import UserInfo, UserPermission, EmployeePermission
 from Utils import access
 
@@ -177,16 +177,19 @@ async def get_user_permission(db: SessionLocal = Depends(get_db),
 
 @router.post("/user_permission", response_model=UserPermissionList)
 async def add_user_permission(user_permission: UserPermission,
-                              db: SessionLocal = Depends(get_db)):
+                              db: SessionLocal = Depends(get_db),
+                              dd_db: SessionLocal = Depends(get_dd_db)
+                              ):
     """
     添加某个用户的权限
 
     :param user_permission:
     :param db:
+    :param dd_db:
     :return: 用户权限列表
     """
 
-    user = db.query(User).filter(User.employee_id == user_permission.employee_id).first()
+    user = dd_db.query(Employee).filter(Employee.employee_id == user_permission.employee_id).first()
     permission_obj = db.query(Permission).filter(Permission.id == user_permission.permission_id).first()
     if not permission_obj:
         raise HTTPException(status_code=400, detail=[
@@ -200,6 +203,7 @@ async def add_user_permission(user_permission: UserPermission,
             }
         ])
     if user:
+        user = User(employee_id=user_permission.employee_id,)
         permission_list = [item.id for item in user.permission]
         if user_permission.permission_id not in permission_list:
             user.permission.append(permission_obj)
