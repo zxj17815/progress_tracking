@@ -245,3 +245,11 @@ class CreateReMark(BaseModel):
 
     class Config:
         orm_mode = True
+        schema_extra = {
+            "example": {
+                "parent_id": 1,
+                "remark_type": "制一",
+                "description": "质量问题",
+                "allow_edit": False
+            }
+        }
