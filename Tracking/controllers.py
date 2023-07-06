@@ -16,7 +16,7 @@ from openpyxl import Workbook
 
 from Db.database import ErpSessionLocal, SessionLocal
 from Tracking.curd import get_mom, get_mom_detail, create_or_update_tracking, get_all_remark, create_remark, \
-    update_remark_by_id
+    update_remark_by_id, delete_remark
 from Tracking.models import Tracking, TrackingLog, ReMark
 from Tracking.schemas import ListMomOrderDetail, CreateTracking, ReMarkList, TrackingDetail, CreateReMark, ReMarkBase
 
@@ -175,7 +175,8 @@ async def add_remark(remark: CreateReMark, db: SessionLocal = Depends(get_db)):
                 "type": "value_error"
             }
         ])
-    exist_obj = db.query(ReMark).filter(ReMark.remark_type == remark.remark_type,
+    exist_obj = db.query(ReMark).filter(ReMark.delete_time == None,
+                                        ReMark.remark_type == remark.remark_type,
                                         ReMark.description == remark.description).first()
     if exist_obj:
         raise HTTPException(status_code=400, detail=[
@@ -228,3 +229,38 @@ async def update_remark(remark_id: int, remark: CreateReMark, db: SessionLocal =
         ])
 
     return update_remark_by_id(db, remark_id, ReMark(**remark.dict()))
+
+
+@router.delete("/remark/{remark_id}", response_model=ReMarkBase)
+async def delete_remark_by_id(remark_id: int, db: SessionLocal = Depends(get_db)):
+    """
+    删除备注
+    :param remark_id:
+    :param db:
+    :return:
+    """
+    exist_obj = db.query(ReMark).filter(ReMark.id == remark_id).first()
+    if not exist_obj:
+        raise HTTPException(status_code=400, detail=[
+            {
+                "loc": [
+                    "body",
+                    "remark_id"
+                ],
+                "msg": "remark is not exist",
+                "type": "value_error"
+            }
+        ])
+    try:
+        return delete_remark(db, exist_obj)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=[
+            {
+                "loc": [
+                    "body",
+                    "remark_id"
+                ],
+                "msg": str(e),
+                "type": "value_error"
+            }
+        ])

@@ -168,14 +168,15 @@ def create_or_update_tracking(db: Session, tracking: Tracking, tracking_remark: 
     添加活更新工单追溯条
     """
     remarks = []
-    for item in tracking_remark:
-        print(item)
-        remark = db.query(ReMark).filter(ReMark.id == item["remark_id"]).first()
-        if remark:
-            temp_obj = TrackingReMark(remark_id=remark.id, create_time=int(time.time()))
-            if remark.allow_edit:
-                temp_obj.customer_remark = item["customer_remark"]
-            remarks.append(temp_obj)
+    if tracking_remark is not None:
+        for item in tracking_remark:
+            print(item)
+            remark = db.query(ReMark).filter(ReMark.id == item["remark_id"]).first()
+            if remark:
+                temp_obj = TrackingReMark(remark_id=remark.id, create_time=int(time.time()))
+                if remark.allow_edit:
+                    temp_obj.customer_remark = item["customer_remark"]
+                remarks.append(temp_obj)
 
     tracking_data = db.query(Tracking).filter(Tracking.order_id == tracking.order_id,
                                               Tracking.produce_id == tracking.produce_id,
@@ -228,7 +229,7 @@ def get_all_remark(db: Session, remark_type: str = None, is_parent: bool = True)
     """
     获取所有备注
     """
-    query = db.query(ReMark)
+    query = db.query(ReMark).filter(ReMark.delete_time.is_(None))
     if remark_type:
         query = query.filter(ReMark.remark_type == remark_type)
     if is_parent:
@@ -269,3 +270,12 @@ def update_remark_by_id(db: Session, remark_id: int, remark: ReMark):
     db.commit()
     db.refresh(obj)
     return obj
+
+
+def delete_remark(db: Session, remark: ReMark):
+    """
+    删除备注
+    """
+    remark.delete_time = int(time.time())
+    db.commit()
+    return remark

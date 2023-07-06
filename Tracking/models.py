@@ -13,6 +13,7 @@
 from sqlalchemy import Boolean, Column, DECIMAL, DateTime, Float, ForeignKey, Index, Integer, Unicode, text, BigInteger
 from sqlalchemy.dialects.mssql import TIMESTAMP, TINYINT
 from sqlalchemy.orm import relationship, backref
+
 from Db.database import Base
 
 metadata = Base.metadata
@@ -238,7 +239,11 @@ class ReMark(Base):
     key = Column(Unicode(250))
     create_time = Column(Integer)
     update_time = Column(Integer)
-    children = relationship('ReMark', backref=backref('parent', remote_side=[id]))
+    delete_time = Column(Integer)
+    children = relationship('ReMark',
+                            backref=backref('parent', remote_side=[id]),
+                            primaryjoin="and_(ReMark.id==remote(ReMark.parent_id),remote(ReMark.delete_time).is_(None))"
+                            )  # 通过remote()指定外键的关联字段,过滤掉已经逻辑删除的数据
 
 
 class TrackingReMark(Base):
