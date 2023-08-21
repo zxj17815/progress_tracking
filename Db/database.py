@@ -26,7 +26,7 @@ ErpSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=erp_engin
 
 DD_SQLALCHEMY_DATABASE_URL = CONFIG.dd_sqlalchemy_database_url
 
-dd_engine = create_engine(DD_SQLALCHEMY_DATABASE_URL)
+dd_engine = create_engine(DD_SQLALCHEMY_DATABASE_URL, pool_pre_ping=True, pool_recycle=3600)
 
 DdSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=dd_engine)
 
